@@ -274,11 +274,8 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //DMA END
 {
-  // 모든 ADC 변환 및 DMA 전송이 완료되면 이 함수가 호출됩니다.
-  // 이 안에서 ADC를 중지하는 것이 안전합니다.
-
   HAL_ADC_Stop_DMA(hadc);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
   seed[0] |= 0x8000;
@@ -315,4 +312,5 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
 
