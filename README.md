@@ -2,60 +2,61 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-STM32 마이크로컨트롤러의 ADC를 이용한 간단한 하드웨어 기반 난수 생성기(TRNG)입니다. 플로팅 상태의 ADC 핀에서 읽어온 아날로그 노이즈를 엔트로피 소스로 활용하여 예측 불가능한 난수를 생성합니다.
+A simple hardware-based true random number generator (TRNG) using the ADC of STM32 microcontrollers. It leverages analog noise read from floating ADC pins as an entropy source to generate unpredictable random numbers.
 
-## 📝 개요
+## 📝 Overview
 
-암호화, 시뮬레이션, 게임 등 다양한 애플리케이션에서는 예측 불가능한 난수가 필요합니다. 대부분의 소프트웨어 기반 난수 생성기(PRNG)는 초기 시드(seed) 값이 같다면 항상 동일한 수열을 반환합니다.
+Applications such as cryptography, simulations, and games often require unpredictable random numbers. Most software-based pseudo-random number generators (PRNGs) will always return the same sequence if initialized with the same seed.
 
-이 프로젝트는 STM32의 ADC가 외부와 연결되지 않은 플로팅(floating) 상태일 때, 주변의 열 잡음(thermal noise)과 전기적 노이즈를 측정하는 원리를 이용합니다. 이 노이즈는 진정한 무작위성을 가지므로, 이를 디지털 값으로 변환하여 고품질의 난수 시드를 생성할 수 있습니다.
+This project uses the principle that when STM32 ADC pins are in a floating state (not connected externally), they pick up ambient thermal and electrical noise. This noise is truly random, so it can be converted into digital values to generate high-quality random seeds.
 
-## ✨ 주요 특징
+## ✨ Key Features
 
--   **하드웨어 기반 난수:** 소프트웨어 알고리즘이 아닌 물리적 노이즈를 엔트로피 소스로 사용 (TRNG)
--   **의존성 최소화:** STM32 HAL 라이브러리 외에 특별한 라이브러리가 필요 없음
--   **가볍고 간단한 코드:** 코드가 매우 짧고 직관적이어서 어떤 프로젝트에도 쉽게 통합 가능
--   **DMA를 통한 효율적인 변환:** ADC 값 읽기 작업을 DMA가 처리하므로 CPU 부하가 거의 없음
--   **커스터마이징 용이:** 비트 연산을 통해 원하는 형식(8-bit, 16-bit, 32-bit)의 난수로 가공 가능
+- **Hardware-based randomness:** Uses physical noise as an entropy source rather than a software algorithm (TRNG)  
+- **Minimal dependencies:** No special libraries required beyond the STM32 HAL  
+- **Lightweight and simple code:** Very short and intuitive, easy to integrate into any project  
+- **Efficient conversion via DMA:** ADC readings are handled by DMA, minimizing CPU load  
+- **Easy customization:** Bitwise operations allow generating random numbers in the desired format (8-bit, 16-bit, 32-bit)  
 
-## ⚙️ 동작 원리
+## ⚙️ How It Works
 
-1.  **ADC 채널 설정:** 외부와 연결되지 않은 두 개 이상의 GPIO 핀을 아날로그 모드로 설정합니다.
-2.  **DMA 전송 시작:** `HAL_ADC_Start_DMA()` 함수를 호출하여 두 채널의 ADC 변환을 시작하고, 결과를 메모리(`seed` 배열)로 전송합니다.
-3.  **변환 완료 대기:** `Continuous Conversion Mode`가 비활성화되어 있으므로 ADC는 2개의 채널 변환 후 자동으로 멈춥니다. DMA 전송이 완료되면 `HAL_ADC_ConvCpltCallback` 콜백 함수가 호출됩니다.
-4.  **완료 신호:** 콜백 함수에서는 메인 루프에 변환이 완료되었음을 알리는 플래그(flag)를 설정합니다. (본 예제에서는 `seed[0]`의 최상위 비트를 플래그로 사용)
-5.  **난수 생성:** 메인 루프는 플래그를 확인하여 새로운 ADC 값을 얻었음을 인지합니다. 두 채널에서 읽어온 값을 XOR, 비트 시프트 등의 연산으로 조합하여 최종 난수를 생성합니다. 이 과정을 통해 통계적 편향을 줄이고 무작위성을 높입니다.
+1. **ADC channel setup:** Configure two or more GPIO pins as analog inputs without any external connection.  
+2. **Start DMA transfer:** Call `HAL_ADC_Start_DMA()` to start ADC conversion on both channels and transfer the results to memory (the `seed` array).  
+3. **Wait for conversion completion:** With `Continuous Conversion Mode` disabled, the ADC automatically stops after converting the two channels. When DMA transfer is complete, the `HAL_ADC_ConvCpltCallback` callback is triggered.  
+4. **Completion signal:** The callback sets a flag indicating the conversion is complete in the main loop. (In this example, the most significant bit of `seed[0]` is used as the flag.)  
+5. **Random number generation:** The main loop checks the flag to know new ADC values are available. Values from the two channels are combined using XOR, bit shifts, and other operations to produce the final random number. This process reduces statistical bias and improves randomness.
 
-## 🚀 사용 방법
+## 🚀 How to Use
 
-### 1. CubeMX 설정
+### 1. CubeMX Setup
 
--   **ADC1 설정:**
-    -   `Scan Conversion Mode`: `Enabled`
-    -   `Continuous Conversion Mode`: `Disabled` (매우 중요!)
-    -   `Number Of Conversion`: `2`
-    -   두 개의 채널(예: `Channel 0`, `Channel 9`)을 설정합니다. 입력 핀은 아무것도 연결하지 않은 상태로 둡니다.
--   **DMA 설정:**
-    -   ADC1에 대한 DMA 채널을 추가하고, `Mode`는 `Normal`로 설정합니다.
--   **NVIC 설정:**
-    -   DMA 인터럽트를 활성화합니다.
+- **ADC1 configuration:**  
+    - `Scan Conversion Mode`: `Enabled`  
+    - `Continuous Conversion Mode`: `Disabled` (very important!)  
+    - `Number Of Conversion`: `2`  
+    - Configure two channels (e.g., `Channel 0`, `Channel 9`) with pins left unconnected.  
+- **DMA configuration:**  
+    - Add a DMA channel for ADC1 and set `Mode` to `Normal`.  
+- **NVIC configuration:**  
+    - Enable DMA interrupts.  
 
-### 2. 코드 적용
+### 2. Apply Code
 
-프로젝트 폴더에 파일을 올바른 경로에 추가합니다.  
-헤더 파일은 Inc에, 소스 파일은 Src에 추가하세요.
+Add the files to the correct folders in your project:  
+- ioc files → `root folder`  
+- Source files → `Src`  
 
-## 💡 활용 예시
+## 💡 Example Use Cases
 
--   의사 난수 생성기(PRNG)의 초기 시드 값으로 사용
--   AES, ChaCha20 등 대칭키 암호화 알고리즘의 IV(Initialization Vector) 생성
--   게임에서 아이템 드랍률, 적의 무작위 행동 패턴 구현
--   통신 프로토콜에서 무작위 딜레이(back-off) 시간 생성
+- Seed values for pseudo-random number generators (PRNGs)  
+- Initialization Vectors (IVs) for symmetric encryption algorithms like AES or ChaCha20  
+- Item drop rates or random enemy behavior in games  
+- Random back-off times in communication protocols  
 
-## ⚠️ 주의사항
+## ⚠️ Caution
 
-본 코드는 간단한 애플리케이션에 충분한 무작위성을 제공하기 위한 예제입니다. 은행 시스템이나 국가 기밀 등 매우 높은 수준의 보안이 요구되는 시스템에서는 STM32에 내장된 하드웨어 RNG 주변장치(있는 경우)를 사용하거나, FIPS-140 등 공인된 인증을 받은 암호화 라이브러리를 사용하는 것을 권장합니다.
+This code is a simple example intended to provide sufficient randomness for general applications. For systems requiring high-security levels, such as banking systems or national secrets, it is recommended to use the STM32 hardware RNG peripheral (if available) or certified cryptographic libraries (e.g., FIPS-140).
 
-## 📄 라이선스
+## 📄 License
 
-이 프로젝트는 [MIT 라이선스](LICENSE)를 따릅니다.
+This project is licensed under the [MIT License](LICENSE).
