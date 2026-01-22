@@ -1,22 +1,15 @@
 # STM32-ADC-TRNG
+STM32F1의 ADC를 활용한 간단한 하드웨어 기반 진정한 난수 생성기(TRNG)로, ADC 핀에서 읽은 아날로그 노이즈를 엔트로피 원천으로 활용하여 예측 불가능한 난수를 생성합니다.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+## 📝 개요
+암호화, 시뮬레이션, 게임과 같은 애플리케이션은 종종 예측 불가능한 난수를 필요로 합니다. 대부분의 소프트웨어 기반 의사 난수 생성기(PRNG)는 동일한 시드로 초기화될 경우 항상 동일한 시퀀스를 반환합니다.
 
-A simple hardware-based true random number generator (TRNG) using the ADC of STM32 microcontrollers. It leverages analog noise read from floating ADC pins as an entropy source to generate unpredictable random numbers.
+이 프로젝트는 STM32 ADC 핀이 플로팅 상태(외부 연결 없음)일 때 주변 열 및 전기 노이즈를 포착한다는 원리를 활용합니다. 이 노이즈는 진정한 난수이므로 디지털 값으로 변환하여 고품질 난수 시드를 생성할 수 있습니다.
 
-## 📝 Overview
-
-Applications such as cryptography, simulations, and games often require unpredictable random numbers. Most software-based pseudo-random number generators (PRNGs) will always return the same sequence if initialized with the same seed.
-
-This project uses the principle that when STM32 ADC pins are in a floating state (not connected externally), they pick up ambient thermal and electrical noise. This noise is truly random, so it can be converted into digital values to generate high-quality random seeds.
-
-## ✨ Key Features
-
-- **Hardware-based randomness:** Uses physical noise as an entropy source rather than a software algorithm (TRNG)  
-- **Minimal dependencies:** No special libraries required beyond the STM32 HAL  
-- **Lightweight and simple code:** Very short and intuitive, easy to integrate into any project  
-- **Efficient conversion via DMA:** ADC readings are handled by DMA, minimizing CPU load  
-- **Easy customization:** Bitwise operations allow generating random numbers in the desired format (8-bit, 16-bit, 32-bit)  
+# 🔧기술 스택 (Tech Stack)
+- HW: STM32F103C8T6
+- SW: C
+- Tools: Logic Analyzer, J-link OB
 
 ## ⚙️ How It Works
 
