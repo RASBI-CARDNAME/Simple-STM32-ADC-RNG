@@ -267,12 +267,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //DMA END
-{
-  HAL_ADC_Stop_DMA(hadc);
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-  seed[0] |= 0x8000;
-}
 /* USER CODE END 4 */
 
 /**
