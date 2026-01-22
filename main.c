@@ -40,7 +40,11 @@ ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
 /* USER CODE BEGIN PV */
+
+//시드 담는 배열
 volatile uint16_t seed[2];
+
+//최종 난수(또는 시드로 활용 가능한) 변수
 volatile uint16_t rand_num;
 /* USER CODE END PV */
 
@@ -99,21 +103,23 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  // 버튼 눌리면 난수 생성 시작
 	  if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == 0) {
 
 		  //first mix
 		  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)seed, 2); //no size_t, it use uint32_t
-		  while((seed[0] >> 15)!=1);
-		  seed[0] &= 0x7FFF;
-		  rand_num = (seed[0] ^ seed[1]);
+		  while((seed[0] >> 15)!=1); //변환 완료 검사 (플래그 확인)
+		  seed[0] &= 0x7FFF; // 플래그 비트 제거
+		  rand_num = (seed[0] ^ seed[1]); // 시드 0과 시드 1을 XOR 연산
 
 		  //second mix
 		  HAL_ADC_Start_DMA(&hadc1, (uint32_t *)seed, 2); //no size_t, it use uint32_t
-		  while((seed[0] >> 15)!=1);
-		  seed[0] &= 0x7FFF;
-		  rand_num = (rand_num^seed[0] ^ seed[1]) | ((seed[0] & 0x0F)<<12);
+		  while((seed[0] >> 15)!=1); //변환 완료 검사 (플래그 확인)
+		  seed[0] &= 0x7FFF; // 플래그 비트 제거
+		  rand_num = (rand_num^seed[0] ^ seed[1]) | ((seed[0] & 0x0F)<<12); // 다시 한번더 XOR 연산 후 시드 0의 하위 4비트를, 난수의 상위 4비트로 채워 넣는다.
 
 	  } else {
+		  //보드 내장 LED 끄기 
 		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
 	  }
   }
@@ -276,8 +282,11 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) //DMA END
 {
+//ADC 중지
   HAL_ADC_Stop_DMA(hadc);
+//보드 내장 LED 켜기
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+//변환 완료 플래그 기입
   seed[0] |= 0x8000;
 }
 /* USER CODE END 4 */
@@ -312,5 +321,6 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
 
 
