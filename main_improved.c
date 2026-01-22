@@ -40,6 +40,7 @@ ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
 /* USER CODE BEGIN PV */
+//난수 담는 변수
 volatile uint16_t rand_num;
 /* USER CODE END PV */
 
@@ -98,12 +99,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	//버튼 눌리면
 	  if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == 0) {
 
-		  //개선된 알고리즘
+	//개선된 알고리즘
       for (int k = 0; k < 16 k++) {
         HAL ADC Start(&hadc1);
-        HAL_ADC_PollForConversion (&hadc1, 10);
+        HAL_ADC_PollForConversion (&hadc1, 10); // 데이터 들어올때 까지 대기
         rand_num = ( (HAL_ADC_GetValue(&hadc1) & 0x01) <<k); // 1비트씩 쏙쏙 뽑아서 채움
       }
 	  } else {
